@@ -1,0 +1,37 @@
+[project]
+name = "devops_ai"
+version = "0.1.0"
+description = "DevOpsAI - Multi-Agent Incident Investigation and Remediation Assistant"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "crewai==1.9.3",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+]
+
+[project.scripts]
+devops_ai = "devops_ai.main:run"
+run_crew = "devops_ai.main:run"
+train = "devops_ai.main:train"
+replay = "devops_ai.main:replay"
+test = "devops_ai.main:test"
+run_with_trigger = "devops_ai.main:run_with_trigger"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
+
+[tool.uv]
+constraint-dependencies = [
+    "onnxruntime==1.23.2; sys_platform == 'darwin' and platform_machine == 'x86_64'"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
