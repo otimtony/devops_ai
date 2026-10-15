@@ -1,6 +1,6 @@
 from devops_ai.guardrails import validate_incident
 from devops_ai.schemas import EvidenceItem, IncidentInput, IncidentReport
-
+from devops_ai.crew import DevopsAi
 
 def create_preliminary_report(
     incident: IncidentInput,
@@ -51,3 +51,38 @@ def investigate_incident(
     )
 
     return create_preliminary_report(incident)
+
+def run_ai_investigation(
+    description: str,
+    log_sample: str,
+    environment: str = "unknown",
+    ):
+    """Validate an incident and run the CrewAI investigation."""
+
+    # Validate input and redact secrets before sending anything to the LLM.
+    incident = validate_incident(
+        description=description,
+        log_sample=log_sample,
+        environment=environment,
+    )
+
+    # Pass only validated, sanitized data to the agents.
+    inputs = {
+        "incident_id": incident.incident_id,
+        "description": incident.description,
+        "log_sample": incident.log_sample,
+        "environment": incident.environment,
+    }
+
+    # Run the five-agent investigation.
+    result = DevopsAi().crew().kickoff(inputs=inputs)
+
+    report = result.pydantic
+
+    if report is None:
+        raise RuntimeError(
+            "The investigation completed without producing "
+            "a valid structured IncidentReport."
+        )
+
+    return report

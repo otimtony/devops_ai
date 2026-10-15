@@ -93,23 +93,38 @@ root_cause_task:
 
 remediation_risk_task:
   description: >
-    Prepare a safe, prioritized investigation and remediation plan based on
-    the preceding triage, log analysis, research, and root-cause findings.
+    Produce the final structured incident investigation report using the
+    incident details and the outputs of all previous investigation tasks.
 
-    Incident description:
-    {description}
+    Incident ID: {incident_id}
+    Environment: {environment}
+    Incident description: {description}
 
-    Environment:
-    {environment}
+    Original log sample:
+    {log_sample}
 
-    Separate immediate diagnostic checks from proposed remediation.
-    For each recommendation, explain its purpose, prerequisites, potential
-    risks, verification steps, and rollback considerations where applicable.
-    Flag actions that require human approval. Do not execute commands,
-    modify systems, or claim that any action has already been completed.
+    Use the preceding task outputs to synthesize the findings from incident
+    triage, log analysis, technical research, root-cause analysis, and
+    remediation risk assessment.
+
+    Requirements:
+    - Set incident_id to the supplied incident ID.
+    - Write a concise summary of the incident and findings.
+    - Select severity as exactly one of: critical, high, medium, low, unknown.
+    - Include likely causes supported by the available evidence.
+    - Separate observed facts from inferences in the evidence list.
+    - For every evidence item, provide an observation, source, and evidence_type.
+    - List practical recommended actions in priority order.
+    - Set confidence to a number between 0.0 and 1.0.
+    - Set requires_human_approval to true.
+    - Do not invent metrics, logs, research references, or confirmed root causes.
+    - Clearly indicate uncertainty when the evidence is insufficient.
+    - Do not execute or claim to have executed remediation actions.
+    - Follow the IncidentReport schema exactly.
+
+    Return the final report as a structured IncidentReport object.
   expected_output: >
-    A prioritized action plan with the purpose of each action, required
-    prerequisites, risks, verification steps, rollback considerations,
-    and human-approval requirements. Include unresolved questions and
-    clearly state that no production changes were executed.
+    A validated IncidentReport containing the incident ID, summary, severity,
+    likely causes, evidence, recommended actions, confidence, and human
+    approval requirement.
   agent: remediation_risk_agent

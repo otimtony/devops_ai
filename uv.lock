@@ -574,6 +574,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "crewai" },
+    { name = "openai" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
@@ -586,7 +587,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "crewai", specifier = "==1.9.3" },
+    { name = "crewai", extras = ["openai"], specifier = "==1.9.3" },
+    { name = "openai", specifier = ">=1.83.0" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
