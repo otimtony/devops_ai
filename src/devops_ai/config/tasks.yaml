@@ -1,17 +1,115 @@
-research_task:
+incident_triage_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    Review the incident details provided below.
 
-reporting_task:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Incident description:
+    {description}
+
+    Environment:
+    {environment}
+
+    Log sample:
+    {log_sample}
+
+    Assess the potential impact and scope of the incident. Identify affected
+    services if the evidence supports it, estimate severity, and list missing
+    information. Separate confirmed facts from assumptions. Do not invent
+    metrics, affected users, or business impact.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A structured incident triage assessment containing the incident summary,
+    potential impact, affected services, proposed severity with justification,
+    confirmed facts, assumptions, and missing information.
+  agent: incident_triage_agent
+
+log_analysis_task:
+  description: >
+    Analyze the incident description, environment, and supplied log sample.
+
+    Incident description:
+    {description}
+
+    Environment:
+    {environment}
+
+    Log sample:
+    {log_sample}
+
+    Identify error messages, timestamps, recurring patterns, possible
+    failure sequences, and relevant evidence. Quote only log content that
+    was actually provided. Do not claim that a pattern proves the root cause.
+    Identify important information that is missing from the logs.
+  expected_output: >
+    A log analysis containing key observations, relevant log excerpts,
+    timestamps when available, possible patterns, supporting evidence,
+    and limitations of the available data.
+  agent: log_analysis_agent
+
+technical_research_task:
+  description: >
+    Use only available approved documentation, runbooks, or historical
+    incident references to find troubleshooting guidance relevant to this
+    incident.
+
+    Incident description:
+    {description}
+
+    Environment:
+    {environment}
+
+    Log sample:
+    {log_sample}
+
+    If no approved reference material or research tools are available,
+    state that clearly. Do not invent documentation, source links,
+    historical incidents, or procedures.
+  expected_output: >
+    Relevant troubleshooting guidance with its source, applicability
+    to this incident, and any limitations. If no approved reference
+    material is available, explicitly state that no verified references
+    were available.
+  agent: technical_research_agent
+
+root_cause_task:
+  description: >
+    Develop and rank plausible root-cause hypotheses using the incident
+    details, the triage assessment, log analysis, and available technical
+    research from previous tasks.
+
+    Incident description:
+    {description}
+
+    Environment:
+    {environment}
+
+    Distinguish evidence that supports each hypothesis from evidence that
+    contradicts it. Explain what additional information would help confirm
+    or reject each hypothesis. Do not present a hypothesis as a confirmed
+    root cause unless the evidence justifies that conclusion.
+  expected_output: >
+    A ranked list of plausible root-cause hypotheses, each containing
+    supporting evidence, contradictory evidence, confidence or uncertainty,
+    and suggested checks to confirm or reject the hypothesis.
+  agent: root_cause_agent
+
+remediation_risk_task:
+  description: >
+    Prepare a safe, prioritized investigation and remediation plan based on
+    the preceding triage, log analysis, research, and root-cause findings.
+
+    Incident description:
+    {description}
+
+    Environment:
+    {environment}
+
+    Separate immediate diagnostic checks from proposed remediation.
+    For each recommendation, explain its purpose, prerequisites, potential
+    risks, verification steps, and rollback considerations where applicable.
+    Flag actions that require human approval. Do not execute commands,
+    modify systems, or claim that any action has already been completed.
+  expected_output: >
+    A prioritized action plan with the purpose of each action, required
+    prerequisites, risks, verification steps, rollback considerations,
+    and human-approval requirements. Include unresolved questions and
+    clearly state that no production changes were executed.
+  agent: remediation_risk_agent
