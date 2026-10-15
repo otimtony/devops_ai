@@ -93,38 +93,24 @@ root_cause_task:
 
 remediation_risk_task:
   description: >
-    Produce the final structured incident investigation report using the
-    incident details and the outputs of all previous investigation tasks.
+    Produce the final structured incident report for incident {incident_id}.
 
-    Incident ID: {incident_id}
-    Environment: {environment}
     Incident description: {description}
+    Environment: {environment}
+    Log sample: {log_sample}
 
-    Original log sample:
-    {log_sample}
+    Use the findings from the previous investigation tasks.
+    Return a report matching the IncidentReport schema.
 
-    Use the preceding task outputs to synthesize the findings from incident
-    triage, log analysis, technical research, root-cause analysis, and
-    remediation risk assessment.
+    Include the incident ID, summary, severity, likely causes,
+    evidence, recommended actions, confidence, and whether human
+    approval is required.
 
-    Requirements:
-    - Set incident_id to the supplied incident ID.
-    - Write a concise summary of the incident and findings.
-    - Select severity as exactly one of: critical, high, medium, low, unknown.
-    - Include likely causes supported by the available evidence.
-    - Separate observed facts from inferences in the evidence list.
-    - For every evidence item, provide an observation, source, and evidence_type.
-    - List practical recommended actions in priority order.
-    - Set confidence to a number between 0.0 and 1.0.
-    - Set requires_human_approval to true.
-    - Do not invent metrics, logs, research references, or confirmed root causes.
-    - Clearly indicate uncertainty when the evidence is insufficient.
-    - Do not execute or claim to have executed remediation actions.
-    - Follow the IncidentReport schema exactly.
-
-    Return the final report as a structured IncidentReport object.
+    Severity must be one of: critical, high, medium, low, unknown.
+    Confidence must be between 0.0 and 1.0.
+    Distinguish observed facts from inferred causes.
+    Do not invent evidence or claim that production changes were executed.
+    Human approval is required before taking remediation actions.
   expected_output: >
-    A validated IncidentReport containing the incident ID, summary, severity,
-    likely causes, evidence, recommended actions, confidence, and human
-    approval requirement.
+    A validated IncidentReport containing all required fields.
   agent: remediation_risk_agent

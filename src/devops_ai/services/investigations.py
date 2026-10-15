@@ -56,7 +56,7 @@ def run_ai_investigation(
     description: str,
     log_sample: str,
     environment: str = "unknown",
-    ):
+    ) -> IncidentReport:
     """Validate an incident and run the CrewAI investigation."""
 
     # Validate input and redact secrets before sending anything to the LLM.
@@ -81,8 +81,7 @@ def run_ai_investigation(
 
     if report is None:
         raise RuntimeError(
-            "The investigation completed without producing "
-            "a valid structured IncidentReport."
+            "The investigation completed without producing a valid structured IncidentReport."
         )
 
     return report
