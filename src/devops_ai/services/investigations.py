@@ -1,6 +1,7 @@
 from devops_ai.guardrails import validate_incident
 from devops_ai.schemas import EvidenceItem, IncidentInput, IncidentReport
 from devops_ai.crew import DevopsAi
+from devops_ai.storage.database import save_incident
 
 def create_preliminary_report(
     incident: IncidentInput,
@@ -77,11 +78,18 @@ def run_ai_investigation(
     # Run the five-agent investigation.
     result = DevopsAi().crew().kickoff(inputs=inputs)
 
+    if result.pydantic is None:
+        raise RuntimeError(
+            "CrewAI did not produce a valid structured incident report."
+        )
+    
     report = result.pydantic
 
     if report is None:
         raise RuntimeError(
             "The investigation completed without producing a valid structured IncidentReport."
         )
+
+    save_incident(incident, report)
 
     return report
