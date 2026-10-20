@@ -1,0 +1,35 @@
+Environment: production
+
+Description: Checkout API started returning HTTP 500 errors about 15 minutes after deploying v2.14.0. Roughly 30% of checkout requests are failing. Other endpoints seem fine.
+
+Logs:
+
+2026-10-20T09:12:01Z INFO  deploy-bot Deployment v2.14.0 completed for checkout-service (3/3 pods ready)
+2026-10-20T09:26:44Z WARN  checkout-service HikariPool-1 - Connection pool usage at 92% (46/50 active)
+2026-10-20T09:27:10Z WARN  checkout-service HikariPool-1 - Connection pool usage at 100% (50/50 active), 18 threads waiting
+2026-10-20T09:27:40Z ERROR checkout-service HikariPool-1 - Connection is not available, request timed out after 30000ms
+2026-10-20T09:27:40Z ERROR checkout-service POST /api/v1/checkout failed status=500 duration=30012ms
+2026-10-20T09:27:41Z ERROR checkout-service org.springframework.jdbc.CannotGetJdbcConnectionException: Failed to obtain JDBC Connection
+2026-10-20T09:28:05Z ERROR checkout-service POST /api/v1/checkout failed status=500 duration=30008ms
+2026-10-20T09:28:30Z WARN  postgres-primary slow query: duration=28411ms statement=SELECT * FROM order_items WHERE order_id = $1
+2026-10-20T09:29:02Z INFO  catalog-service GET /api/v1/products status=200 duration=45ms
+
+
+
+===============
+
+
+Environment: development
+
+Description: The local notification service can't send emails. The SMTP connection fails on startup.
+
+Logs: 
+
+2026-10-20T10:02:11Z INFO  notification-service Loading config smtp_host=smtp.dev.local smtp_port=587
+2026-10-20T10:02:11Z DEBUG notification-service password=SuperSecret123! api_key=sk_live_abcdef1234567890
+2026-10-20T10:02:11Z DEBUG notification-service aws credentials AKIAIOSFODNN7EXAMPLE
+2026-10-20T10:02:12Z ERROR notification-service SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted')
+2026-10-20T10:02:12Z ERROR notification-service Failed to initialise mailer, retrying in 30s
+
+
+
