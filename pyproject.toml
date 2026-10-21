@@ -7,9 +7,11 @@ requires-python = ">=3.11,<3.14"
 
 dependencies = [
     "apscheduler>=3.10,<4",
-    "crewai==1.9.3",
+    "crewai[openai]==1.9.3",
     "fastapi>=0.141.1",
     "litellm==1.75.3",
+    "openai>=1.83.0",
+    "gradio",
     "pydantic[email]",
     "pydantic-settings",
     "python-dotenv",
@@ -23,6 +25,7 @@ train = "devops_ai.main:train"
 replay = "devops_ai.main:replay"
 test = "devops_ai.main:test"
 run_with_trigger = "devops_ai.main:run_with_trigger"
+ui = "devops_ai.app:main"
 
 [build-system]
 requires = ["hatchling"]
