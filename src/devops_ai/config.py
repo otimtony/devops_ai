@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     openai_api_key: SecretStr | None = None
+    groq_api_key: SecretStr | None = None
 
     max_incident_description_chars: int = 5_000
     max_log_sample_chars: int = 20_000

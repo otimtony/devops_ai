@@ -1,8 +1,14 @@
+import os
+import time
+from typing import List
+
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from typing import List
+
+from devops_ai.config import settings
 from devops_ai.schemas import IncidentReport
+
 
 @CrewBase
 class DevopsAi():
@@ -13,12 +19,56 @@ class DevopsAi():
 
     #***************** open ai model used by devopsai agents ***************
     def openai_llm(self) -> LLM:
-        return LLM(
-            model="openai/gpt-4o-mini",
-            temperature=0.1,
-            timeout=120,
-            max_retries=2,
-        )
+        # *************************** groq ai *************************
+        # groq_api_key = os.getenv("GROQ_API_KEY")
+        # if not groq_api_key and settings.groq_api_key:
+        #     groq_api_key = settings.groq_api_key.get_secret_value()
+
+        # if not groq_api_key:
+        #     raise ValueError(
+        #         "GROQ_API_KEY is not set. Add it to your environment or .env file."
+        #     )
+
+        # # lower-cost Groq model; avoids the 8k TPM cap more reliably
+        # model_candidates = [
+        #     "groq/openai/gpt-oss-20b",
+        #     "groq/llama-3.3-70b-versatile",
+        # ]
+
+        # *************************** open ai *************************
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key and settings.openai_api_key:
+            openai_api_key = settings.openai_api_key.get_secret_value()
+
+        if not openai_api_key:
+            raise ValueError(
+                "OPENAI_API_KEY is not set. Add it to your environment or .env file."
+            )
+
+        model_candidates = [
+            "gpt-4o-mini",
+            "gpt-4o",
+        ]
+
+        last_error = None
+        for model_name in model_candidates:
+            try:
+                return LLM(
+                    model=model_name,
+                    api_key=openai_api_key, # open ai key
+                    # api_key=groq_api_key, # groq key
+                    temperature=0.1,
+                    timeout=120,
+                    max_retries=1,
+                )
+            except Exception as exc:
+                last_error = exc
+                time.sleep(2)
+
+        if last_error:
+            raise last_error
+
+        raise RuntimeError("No valid Groq model available.")
 
     #****************************** Agents *****************************XWW
     @agent
