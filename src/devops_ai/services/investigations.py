@@ -1,4 +1,7 @@
 import time
+from collections.abc import Callable
+
+from crewai.tasks.task_output import TaskOutput
 from litellm.exceptions import RateLimitError
 
 from devops_ai.guardrails import validate_incident
@@ -60,8 +63,12 @@ def run_ai_investigation(
     description: str,
     log_sample: str,
     environment: str = "unknown",
+    on_task_complete: Callable[[TaskOutput], None] | None = None,
     ) -> IncidentReport:
-    """Validate an incident and run the CrewAI investigation."""
+    """Validate an incident and run the CrewAI investigation.
+
+    on_task_complete is called with each task's output as the crew progresses.
+    """
 
     # Validate input and redact secrets before sending anything to the LLM.
     incident = validate_incident(
@@ -80,7 +87,10 @@ def run_ai_investigation(
 
     for attempt in range(3):
         try:
-            result = DevopsAi().crew().kickoff(inputs=inputs)
+            crew = DevopsAi().crew()
+            if on_task_complete:
+                crew.task_callback = on_task_complete
+            result = crew.kickoff(inputs=inputs)
             break
         except RateLimitError as exc:
             if attempt == 2:

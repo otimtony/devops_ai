@@ -75,10 +75,21 @@ def initialize_database(database_path: Path | None = None) -> None:
                 description TEXT NOT NULL,
                 environment TEXT NOT NULL,
                 created_at TEXT NOT NULL,
-                report_json TEXT NOT NULL
+                report_json TEXT NOT NULL,
+                log_sample TEXT NOT NULL DEFAULT ''
             )
             """
         )
+
+        # Older databases were created before log samples were stored.
+        columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(incidents)")
+        }
+        if "log_sample" not in columns:
+            connection.execute(
+                "ALTER TABLE incidents ADD COLUMN log_sample TEXT NOT NULL DEFAULT ''"
+            )
 
 
 def save_incident(
@@ -113,15 +124,17 @@ def save_incident(
                 description,
                 environment,
                 created_at,
-                report_json
+                report_json,
+                log_sample
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(incident_id)
             DO UPDATE SET
                 description = excluded.description,
                 environment = excluded.environment,
                 created_at = excluded.created_at,
-                report_json = excluded.report_json
+                report_json = excluded.report_json,
+                log_sample = excluded.log_sample
             """,
             (
                 canonical_incident_id,
@@ -129,9 +142,30 @@ def save_incident(
                 incident.environment,
                 incident.created_at.isoformat(),
                 report.model_dump_json(),
+                incident.log_sample,
             ),
         )
         connection.commit()
+
+
+def get_incident_input(
+    incident_id: str,
+    database_path: Path | None = None,
+) -> dict | None:
+    """Return the description, environment and logs submitted for an incident."""
+    initialize_database(database_path)
+
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT description, environment, log_sample
+            FROM incidents
+            WHERE incident_id = ?
+            """,
+            (incident_id,),
+        ).fetchone()
+
+    return dict(row) if row else None
 
 
 def get_incident_report(
@@ -159,6 +193,7 @@ def get_incident_report(
 def list_incidents(
     limit: int = 20,
     database_path: Path | None = None,
+    approved_only: bool = False,
 ) -> list[dict]:
     """Return recent incident summaries, newest first."""
     if not 1 <= limit <= 100:
@@ -166,11 +201,18 @@ def list_incidents(
 
     initialize_database(database_path)
 
+    approval_filter = (
+        "WHERE json_extract(report_json, '$.human_approval_status') = 'approved'"
+        if approved_only
+        else ""
+    )
+
     with get_connection(database_path) as connection:
         rows = connection.execute(
-            """
+            f"""
             SELECT incident_id, description, environment, created_at
             FROM incidents
+            {approval_filter}
             ORDER BY created_at DESC, incident_id DESC
             LIMIT ?
             """,
