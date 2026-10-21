@@ -1,3 +1,6 @@
+import time
+from litellm.exceptions import RateLimitError
+
 from devops_ai.guardrails import validate_incident
 from devops_ai.schemas import EvidenceItem, IncidentInput, IncidentReport
 from devops_ai.crew import DevopsAi
@@ -75,13 +78,27 @@ def run_ai_investigation(
         "environment": incident.environment,
     }
 
-    # Run the five-agent investigation.
-    result = DevopsAi().crew().kickoff(inputs=inputs)
+    for attempt in range(3):
+        try:
+            result = DevopsAi().crew().kickoff(inputs=inputs)
+            break
+        except RateLimitError as exc:
+            if attempt == 2:
+                raise
+            wait_seconds = 30 * (attempt + 1)
+            print(
+                f"Groq rate limit hit while running the investigation. "
+                f"Retrying in {wait_seconds} seconds (attempt {attempt + 2}/3)."
+            )
+            time.sleep(wait_seconds)
+    else:
+        raise RuntimeError("Investigation failed after retrying for rate limits.")
 
     if result.pydantic is None:
         raise RuntimeError(
             "CrewAI did not produce a valid structured incident report."
         )
+
     
     report = result.pydantic
 

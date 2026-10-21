@@ -1,9 +1,59 @@
-
 import sqlite3
 from pathlib import Path
 
 from devops_ai.config import settings
 from devops_ai.schemas import IncidentInput, IncidentReport
+
+from typing import Literal
+
+from devops_ai.config import settings
+from devops_ai.schemas import IncidentInput, IncidentReport
+
+
+def update_incident_human_approval(
+    incident_id: str,
+    status: Literal["approved", "rejected"],
+    reason: str | None = None,
+    database_path: Path | None = None,
+) -> IncidentReport | None:
+    """Persist a human approval decision for a saved incident report."""
+    if status not in {"approved", "rejected"}:
+        raise ValueError("Status must be 'approved' or 'rejected'.")
+
+    initialize_database(database_path)
+
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT report_json
+            FROM incidents
+            WHERE incident_id = ?
+            """,
+            (incident_id,),
+        ).fetchone()
+
+    if row is None:
+        return None
+
+    report = IncidentReport.model_validate_json(row["report_json"])
+    report.human_approval_status = status
+    report.human_approval_reason = (
+        reason.strip() if reason and reason.strip() else None
+    )
+    report.requires_human_approval = False
+
+    with get_connection(database_path) as connection:
+        connection.execute(
+            """
+            UPDATE incidents
+            SET report_json = ?
+            WHERE incident_id = ?
+            """,
+            (report.model_dump_json(), incident_id),
+        )
+        connection.commit()
+
+    return report
 
 def get_connection(database_path: Path | None = None) -> sqlite3.Connection:
     """Open a connection to the DevOpsAI SQLite database."""
@@ -14,7 +64,7 @@ def get_connection(database_path: Path | None = None) -> sqlite3.Connection:
     connection.row_factory = sqlite3.Row
     return connection
 
-# ************************** initialize database *****************************
+
 def initialize_database(database_path: Path | None = None) -> None:
     """Create the incident history table if it does not exist."""
     with get_connection(database_path) as connection:
@@ -30,13 +80,28 @@ def initialize_database(database_path: Path | None = None) -> None:
             """
         )
 
+
 def save_incident(
     incident: IncidentInput,
     report: IncidentReport,
     database_path: Path | None = None,
 ) -> None:
-    if incident.incident_id != report.incident_id:
-        raise ValueError("Incident ID does not match the report ID.")
+    """Persist an incident/report and keep the report ID as the canonical key."""
+    canonical_incident_id = report.incident_id or incident.incident_id
+
+    if not canonical_incident_id:
+        raise ValueError("Incident ID is required before saving.")
+
+    # Keep the report ID as the source of truth, but don't fail the write.
+    if (
+        incident.incident_id
+        and report.incident_id
+        and incident.incident_id != report.incident_id
+    ):
+        print(
+            "Warning: incident ID mismatch detected. "
+            f"Using report incident_id '{canonical_incident_id}' as canonical."
+        )
 
     initialize_database(database_path)
 
@@ -51,22 +116,28 @@ def save_incident(
                 report_json
             )
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(incident_id)
+            DO UPDATE SET
+                description = excluded.description,
+                environment = excluded.environment,
+                created_at = excluded.created_at,
+                report_json = excluded.report_json
             """,
             (
-                incident.incident_id,
+                canonical_incident_id,
                 incident.description,
                 incident.environment,
                 incident.created_at.isoformat(),
                 report.model_dump_json(),
             ),
         )
+        connection.commit()
 
 
 def get_incident_report(
     incident_id: str,
     database_path: Path | None = None,
 ) -> IncidentReport | None:
-    
     initialize_database(database_path)
 
     with get_connection(database_path) as connection:

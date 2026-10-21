@@ -69,3 +69,9 @@ class IncidentReport(BaseModel):
 
     confidence: float = Field(ge=0.0, le=1.0)
     requires_human_approval: bool = True
+    human_approval_status: Literal["pending", "approved", "rejected"] = "pending"
+    human_approval_reason: str | None = Field(
+        default=None,
+        max_length=1_000,
+        description="Optional justification for the user approval/rejection decision.",
+    )
