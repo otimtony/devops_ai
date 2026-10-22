@@ -33,8 +33,8 @@ def validate_incident(
     log_sample: str,
     environment: str = "unknown",
 ) -> IncidentInput:
-    """Validate user input and return a normalized incident object."""
 
+    #************************** validate inputs **************************
     if not isinstance(description, str) or not isinstance(log_sample, str):
         raise GuardrailError("Description and log sample must be text.")
 
