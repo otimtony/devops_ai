@@ -46,9 +46,9 @@ log_analysis_task:
 
 technical_research_task:
   description: >
-    Use only available approved documentation, runbooks, or historical
-    incident references to find troubleshooting guidance relevant to this
-    incident.
+    Use your general technical knowledge to suggest relevant troubleshooting
+    guidance. Compare it with recent human-approved prior incident reports
+    when any are provided below.
 
     Incident description:
     {description}
@@ -59,14 +59,21 @@ technical_research_task:
     Log sample:
     {log_sample}
 
-    If no approved reference material or research tools are available,
-    state that clearly. Do not invent documentation, source links,
-    historical incidents, or procedures.
+    Recent human-approved prior incidents from SQLite:
+    {prior_incidents}
+
+    Treat prior incidents as historical examples, not proof of the current
+    cause. Cite their incident IDs when referring to them. Clearly distinguish
+    model-generated guidance from findings supported by the current incident
+    data. Do not claim that prior recommended actions succeeded unless the
+    historical report says so. Do not invent sources, incidents, or evidence.
+    If no prior reports are provided, state that and use general knowledge
+    cautiously. No live web search is available.
   expected_output: >
-    Relevant troubleshooting guidance with its source, applicability
-    to this incident, and any limitations. If no approved reference
-    material is available, explicitly state that no verified references
-    were available.
+    Concise troubleshooting guidance that distinguishes general technical
+    knowledge, current-incident evidence, and relevant prior incidents. Cite
+    prior incident IDs and explain relevance and limitations. State when no
+    approved prior incident was found.
   agent: technical_research_agent
 
 root_cause_task:

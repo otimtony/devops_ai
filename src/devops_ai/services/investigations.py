@@ -1,13 +1,15 @@
 import time
-from collections.abc import Callable
-
-from crewai.tasks.task_output import TaskOutput
 from litellm.exceptions import RateLimitError
 
 from devops_ai.guardrails import validate_incident
 from devops_ai.schemas import EvidenceItem, IncidentInput, IncidentReport
 from devops_ai.crew import DevopsAi
-from devops_ai.storage.database import save_incident
+from devops_ai.storage.database import (
+    get_recent_approved_incidents,
+    save_incident,
+)
+
+# investigations.py is the orchestration layer for the actual incident analysis flow.
 
 def create_preliminary_report(
     incident: IncidentInput,
@@ -63,12 +65,8 @@ def run_ai_investigation(
     description: str,
     log_sample: str,
     environment: str = "unknown",
-    on_task_complete: Callable[[TaskOutput], None] | None = None,
     ) -> IncidentReport:
-    """Validate an incident and run the CrewAI investigation.
-
-    on_task_complete is called with each task's output as the crew progresses.
-    """
+    """Validate an incident and run the CrewAI investigation."""
 
     # Validate input and redact secrets before sending anything to the LLM.
     incident = validate_incident(
@@ -77,20 +75,35 @@ def run_ai_investigation(
         environment=environment,
     )
 
-    # Pass only validated, sanitized data to the agents.
+    # Load up to three recent approved report summaries from SQLite.
+    prior_incidents = get_recent_approved_incidents(
+        current_incident_id=incident.incident_id,
+        limit=3,
+    )
+    prior_incidents_context = "No human-approved prior incidents were found."
+    if prior_incidents:
+        prior_incidents_context = "\n\n".join(
+            f"Incident ID: {item['incident_id']}\n"
+            f"Date: {item['created_at']}\n"
+            f"Environment: {item['environment']}\n"
+            f"Severity: {item['severity']}\n"
+            f"Summary: {item['summary']}\n"
+            f"Likely causes: {'; '.join(item['likely_causes'])}"
+            for item in prior_incidents
+        )
+
+    # Pass sanitized incident details and approved report summaries to the LLM.
     inputs = {
         "incident_id": incident.incident_id,
         "description": incident.description,
         "log_sample": incident.log_sample,
         "environment": incident.environment,
+        "prior_incidents": prior_incidents_context,
     }
 
     for attempt in range(3):
         try:
-            crew = DevopsAi().crew()
-            if on_task_complete:
-                crew.task_callback = on_task_complete
-            result = crew.kickoff(inputs=inputs)
+            result = DevopsAi().crew().kickoff(inputs=inputs)
             break
         except RateLimitError as exc:
             if attempt == 2:
@@ -109,7 +122,6 @@ def run_ai_investigation(
             "CrewAI did not produce a valid structured incident report."
         )
 
-    
     report = result.pydantic
 
     if report is None:

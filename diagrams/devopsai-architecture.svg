@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">DevOpsAI architecture and agent responsibilities</title>
+  <desc id="desc">Architecture overview of the DevOpsAI incident investigation workflow, showing input guardrails, five AI agents with roles and importance, OpenAI model access, report validation, human approval, and SQLite history.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#081323"/><stop offset="1" stop-color="#111f35"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#51d6bd"/><stop offset="1" stop-color="#69a8ff"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-20%" width="130%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#020914" flood-opacity=".32"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10z" fill="#91b2d3"/></marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 10 5 0 10z" fill="#59d7c0"/></marker>
+    <style>
+      text{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;fill:#edf5ff}
+      .muted{fill:#a6b8ce}.tiny{font-size:13px}.small{font-size:15px}.body{font-size:16px}.label{font-size:12px;font-weight:750;letter-spacing:1.4px;fill:#8eafd0}.stage{fill:#12243a;stroke:#2a4562;stroke-width:1.4}.agent{fill:#11243a;stroke:#304c69;stroke-width:1.2}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1450" cy="95" r="190" fill="#23436a" opacity=".12"/><circle cx="75" cy="850" r="250" fill="#1a816f" opacity=".07"/>
+
+  <text x="66" y="54" class="label">SYSTEM ARCHITECTURE</text>
+  <text x="66" y="101" font-size="38" font-weight="730">DevOpsAI Incident Investigation</text>
+  <text x="68" y="132" font-size="17" class="muted">From operator-provided incident data to an evidence-based report, reviewed by a human.</text>
+
+  <!-- Main workflow: one left-to-right path -->
+  <g filter="url(#shadow)">
+    <rect x="65" y="177" width="194" height="158" rx="17" class="stage"/>
+    <rect x="295" y="177" width="225" height="158" rx="17" class="stage"/>
+    <rect x="556" y="177" width="358" height="158" rx="17" fill="#142b40" stroke="#3a6c79" stroke-width="1.6"/>
+    <rect x="950" y="177" width="225" height="158" rx="17" class="stage"/>
+    <rect x="1211" y="177" width="324" height="158" rx="17" class="stage"/>
+    <rect x="950" y="359" width="225" height="57" rx="12" fill="#102a3d" stroke="#3c6474" stroke-width="1.2"/>
+  </g>
+  <path d="M259 256h31M520 256h30M914 256h30M1175 256h30" fill="none" stroke="#91b2d3" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="88" y="211" class="label">01 · INTAKE</text>
+  <text x="88" y="243" font-size="19" font-weight="680">Operator</text>
+  <text x="88" y="271" class="small muted">Incident description</text><text x="88" y="295" class="small muted">Environment + log sample</text><text x="88" y="319" class="tiny muted">Web UI or command line</text>
+
+  <text x="318" y="211" class="label">02 · INPUT SAFETY</text>
+  <text x="318" y="243" font-size="19" font-weight="680">Guardrails</text>
+  <text x="318" y="271" class="small muted">Required fields + size limits</text><text x="318" y="295" class="small muted">Redact common secret patterns</text><text x="318" y="319" class="tiny muted">Sanitized text reaches the model</text>
+
+  <text x="580" y="211" class="label">03 · INVESTIGATION</text>
+  <text x="580" y="243" font-size="19" font-weight="680">CrewAI · five sequential agents</text>
+  <text x="580" y="272" class="small muted">Each task contributes findings to the final report.</text>
+  <rect x="580" y="291" width="308" height="29" rx="8" fill="#1c3b50" stroke="#396276"/>
+  <text x="594" y="311" class="tiny" fill="#92e6d2">OpenAI API · gpt-4o-mini / gpt-4o fallback</text>
+
+  <text x="973" y="211" class="label">04 · STRUCTURED RESULT</text>
+  <text x="973" y="243" font-size="19" font-weight="680">Incident report</text>
+  <text x="973" y="271" class="small muted">Schema-validated output</text><text x="973" y="295" class="small muted">Causes · evidence · actions</text><text x="973" y="319" class="tiny muted">Saved to incident history</text>
+
+  <text x="1235" y="211" class="label">05 · HUMAN IN THE LOOP</text>
+  <text x="1235" y="243" font-size="19" font-weight="680">Operator review</text>
+  <text x="1235" y="271" class="small muted">Approve or reject the report</text><text x="1235" y="295" class="small muted">Approval is required before action</text><text x="1235" y="319" class="tiny muted">The system never executes changes</text>
+
+  <!-- Persist report and human decision -->
+  <path d="M1062 335v18" fill="none" stroke="#59d7c0" stroke-width="2.5" marker-end="url(#arrowTeal)"/>
+  <path d="M1373 335v53h-193" fill="none" stroke="#91b2d3" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+  <text x="1193" y="379" class="tiny muted">approval update</text>
+  <text x="972" y="384" class="label">SQLITE · INCIDENT HISTORY</text>
+  <text x="972" y="405" class="tiny muted">Inputs, report and approval status</text>
+
+  <!-- Agent detail section -->
+  <path d="M65 425h1470" stroke="#29415c" stroke-width="1"/>
+  <text x="66" y="408" class="label">AGENT ROLES, DESCRIPTIONS &amp; IMPORTANCE</text>
+
+  <g filter="url(#shadow)">
+    <rect x="65" y="430" width="278" height="350" rx="17" class="agent"/>
+    <rect x="361" y="430" width="278" height="350" rx="17" class="agent"/>
+    <rect x="657" y="430" width="278" height="350" rx="17" class="agent"/>
+    <rect x="953" y="430" width="278" height="350" rx="17" class="agent"/>
+    <rect x="1249" y="430" width="286" height="350" rx="17" class="agent"/>
+  </g>
+  <g fill="url(#accent)">
+    <rect x="65" y="430" width="278" height="5" rx="3"/><rect x="361" y="430" width="278" height="5" rx="3"/><rect x="657" y="430" width="278" height="5" rx="3"/><rect x="953" y="430" width="278" height="5" rx="3"/><rect x="1249" y="430" width="286" height="5" rx="3"/>
+  </g>
+
+  <!-- Step arrows between agent cards -->
+  <path d="M345 451h11M641 451h11M937 451h11M1233 451h11" stroke="#59d7c0" stroke-width="2.6" marker-end="url(#arrowTeal)"/>
+
+  <!-- Agent 1 -->
+  <text x="85" y="466" class="label">AGENT 1</text>
+  <text x="85" y="494" font-size="18" font-weight="690">Incident triage</text>
+  <text x="85" y="525" class="label">ROLE</text>
+  <text x="85" y="548" class="body">Incident triage specialist</text>
+  <text x="85" y="583" class="label">DESCRIPTION</text>
+  <text x="85" y="607" class="body muted"><tspan x="85">Assesses impact, scope and</tspan><tspan x="85" dy="21">severity; identifies missing</tspan><tspan x="85" dy="21">information.</tspan></text>
+  <text x="85" y="687" class="label">WHY IT MATTERS</text>
+  <text x="85" y="711" class="body"><tspan x="85">Sets a grounded starting point</tspan><tspan x="85" dy="21">and separates facts from</tspan><tspan x="85" dy="21">assumptions.</tspan></text>
+
+  <!-- Agent 2 -->
+  <text x="381" y="466" class="label">AGENT 2</text>
+  <text x="381" y="494" font-size="18" font-weight="690">Log analysis</text>
+  <text x="381" y="525" class="label">ROLE</text>
+  <text x="381" y="548" class="body">Application / infrastructure</text><text x="381" y="569" class="body">log analyst</text>
+  <text x="381" y="603" class="label">DESCRIPTION</text>
+  <text x="381" y="627" class="body muted"><tspan x="381">Finds errors, timestamps,</tspan><tspan x="381" dy="21">repeated patterns and relevant</tspan><tspan x="381" dy="21">log evidence.</tspan></text>
+  <text x="381" y="707" class="label">WHY IT MATTERS</text>
+  <text x="381" y="731" class="body"><tspan x="381">Turns raw logs into observations</tspan><tspan x="381" dy="21">that can support or challenge</tspan><tspan x="381" dy="21">a hypothesis.</tspan></text>
+
+  <!-- Agent 3 -->
+  <text x="677" y="466" class="label">AGENT 3</text>
+  <text x="677" y="494" font-size="18" font-weight="690">Technical research</text>
+  <text x="677" y="525" class="label">ROLE</text>
+  <text x="677" y="548" class="body">DevOps technical research</text><text x="677" y="569" class="body">specialist</text>
+  <text x="677" y="603" class="label">DESCRIPTION</text>
+  <text x="677" y="627" class="body muted"><tspan x="677">Uses general LLM knowledge</tspan><tspan x="677" dy="21">and recent human-approved</tspan><tspan x="677" dy="21">reports retrieved from SQLite.</tspan></text>
+  <text x="677" y="707" class="label">WHY IT MATTERS</text>
+  <text x="677" y="731" class="body"><tspan x="677">Cites prior incident IDs and</tspan><tspan x="677" dy="21">keeps historical examples</tspan><tspan x="677" dy="21">separate from current evidence.</tspan></text>
+
+  <!-- Agent 4 -->
+  <text x="973" y="466" class="label">AGENT 4</text>
+  <text x="973" y="494" font-size="18" font-weight="690">Root cause analysis</text>
+  <text x="973" y="525" class="label">ROLE</text>
+  <text x="973" y="548" class="body">Senior SRE / root cause</text><text x="973" y="569" class="body">analyst</text>
+  <text x="973" y="603" class="label">DESCRIPTION</text>
+  <text x="973" y="627" class="body muted"><tspan x="973">Ranks plausible causes using</tspan><tspan x="973" dy="21">supporting, contradictory and</tspan><tspan x="973" dy="21">missing evidence.</tspan></text>
+  <text x="973" y="707" class="label">WHY IT MATTERS</text>
+  <text x="973" y="731" class="body"><tspan x="973">Focuses follow-up checks while</tspan><tspan x="973" dy="21">keeping hypotheses distinct from</tspan><tspan x="973" dy="21">confirmed causes.</tspan></text>
+
+  <!-- Agent 5 -->
+  <text x="1269" y="466" class="label">AGENT 5</text>
+  <text x="1269" y="494" font-size="18" font-weight="690">Remediation &amp; risk</text>
+  <text x="1269" y="525" class="label">ROLE</text>
+  <text x="1269" y="548" class="body">Remediation and risk</text><text x="1269" y="569" class="body">specialist</text>
+  <text x="1269" y="603" class="label">DESCRIPTION</text>
+  <text x="1269" y="627" class="body muted"><tspan x="1269">Produces prioritized actions,</tspan><tspan x="1269" dy="21">operational risks and verification</tspan><tspan x="1269" dy="21">steps.</tspan></text>
+  <text x="1269" y="707" class="label">WHY IT MATTERS</text>
+  <text x="1269" y="731" class="body"><tspan x="1269">Gives operators safer next steps;</tspan><tspan x="1269" dy="21">a human decides and executes</tspan><tspan x="1269" dy="21">any remediation.</tspan></text>
+
+  <!-- Persistence and key implementation facts -->
+  <rect x="65" y="800" width="1470" height="62" rx="14" fill="#10263a" stroke="#294861" stroke-width="1.2"/>
+  <circle cx="96" cy="831" r="12" fill="#214d49"/><path d="M96 822v10M96 837v1" stroke="#7ae0be" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="121" y="827" class="label">HUMAN-DIRECTED RECOMMENDATIONS</text>
+  <text x="121" y="849" class="small">The report proposes next steps; operators decide whether to act. No production changes are executed.</text>
+  <text x="1534" y="885" text-anchor="end" class="tiny muted">Python · Gradio · CrewAI · OpenAI · SQLite</text>
+</svg>

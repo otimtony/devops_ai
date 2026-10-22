@@ -16,11 +16,13 @@ input ─► guardrails (validate + redact secrets) ─► 5-agent crew ─► I
 |---|---|
 | Incident Triage | Assesses impact, scope and severity, and lists missing information |
 | Log Analysis | Finds errors, timestamps and patterns in the supplied logs |
-| Technical Research | Looks for relevant runbooks or past incidents |
+| Technical Research | Combines general LLM knowledge with recent human-approved reports from SQLite |
 | Root Cause | Ranks root-cause hypotheses using the evidence for and against each one |
 | Remediation & Risk | Produces the final validated report with recommended actions |
 
 Before anything is sent to the model, the guardrails reject empty or oversized input and redact common secret patterns (AWS keys, `password=...`, `api_key=...`).
+
+The Technical Research agent compares its general knowledge with up to three recent human-approved reports from SQLite. It receives report summaries and incident IDs, not historical raw logs, and must treat past incidents as examples rather than proof of the current cause. It does not search the live web.
 
 ## Project structure
 

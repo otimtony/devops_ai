@@ -1,9 +1,5 @@
 import sqlite3
 from pathlib import Path
-
-from devops_ai.config import settings
-from devops_ai.schemas import IncidentInput, IncidentReport
-
 from typing import Literal
 
 from devops_ai.config import settings
@@ -220,3 +216,43 @@ def list_incidents(
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def get_recent_approved_incidents(
+    current_incident_id: str,
+    limit: int = 3,
+    database_path: Path | None = None,
+) -> list[dict]:
+    """Return a few recent human-approved incident report summaries."""
+    if not 1 <= limit <= 10:
+        raise ValueError("Limit must be between 1 and 10.")
+
+    initialize_database(database_path)
+    with get_connection(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT incident_id, environment, created_at, report_json
+            FROM incidents
+            WHERE incident_id != ?
+              AND json_extract(report_json, '$.human_approval_status') = 'approved'
+            ORDER BY created_at DESC, incident_id DESC
+            LIMIT ?
+            """,
+            (current_incident_id, limit),
+        ).fetchall()
+
+    incidents = []
+    for row in rows:
+        report = IncidentReport.model_validate_json(row["report_json"])
+        incidents.append(
+            {
+                "incident_id": row["incident_id"],
+                "created_at": row["created_at"],
+                "environment": row["environment"],
+                "summary": report.summary,
+                "severity": report.severity,
+                "likely_causes": report.likely_causes[:5],
+            }
+        )
+
+    return incidents

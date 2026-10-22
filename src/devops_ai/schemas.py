@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, ConfigDict
 
-
+# Pydantic models
 class IncidentInput(BaseModel):
     """Information supplied by a user who wants to investigate an incident."""
 
